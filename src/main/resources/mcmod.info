@@ -1,0 +1,16 @@
+[
+{
+  "modid": "oc_wasm",
+  "name": "Open Computers WASM Arch",
+  "description": "Run software written in web assembly on your computers.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["I am the Carl"],
+  "credits": "I am the Carl",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
