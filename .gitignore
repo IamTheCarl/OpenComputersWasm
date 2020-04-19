@@ -16,6 +16,12 @@ out
 # vscode
 .vscode/*
 
+# native libraries
+*.so
+*.dll
+*.dylib
+wasm-interpreter/target/*
+
 # gradle
 build
 .gradle

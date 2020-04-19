@@ -1,6 +1,5 @@
 package com.thecarl.ocwasm;
 
-import net.minecraft.init.Blocks;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -26,7 +25,7 @@ public class OCWasm
     @EventHandler
     public void init(FMLInitializationEvent event)
     {
-        // some example code
-        logger.info("DIRT BLOCK >> {}", Blocks.DIRT.getRegistryName());
+        li.cil.oc.api.Machine.add(WasmArch.class);
+        logger.info("WASM arch has been added.");
     }
 }

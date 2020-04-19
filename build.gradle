@@ -50,6 +50,41 @@ dependencies {
     deobfCompile "mezz.jei:jei_${project.mc_version}:${project.jei_version}"
 }
 
+compileJava {
+    options.compilerArgs += ['-h', "${buildDir}/headers"]
+}
+
+task buildNativeLibraries {
+
+    exec {
+        workingDir 'wasm-interpreter'
+
+        if ("${project.build_linux}" == "true") {
+            commandLine 'cargo', 'build', '--target', 'x86_64-unknown-linux-gnu', '--release'
+        }
+
+        if ("${project.build_windows}" == "true") {
+            commandLine 'cargo', 'build', '--target', 'x86_64-pc-windows-gnu', '--release'
+        }
+
+        if ("${project.build_macos}" == "true") {
+            commandLine 'cargo', 'build', '--target', 'x86_64-apple-darwin', '--release'
+        }
+    }
+
+    copy {
+        from file("wasm-interpreter/target/x86_64-unknown-linux-gnu/release/libwasm_interpreter.so")
+        from file("wasm-interpreter/target/x86_64-pc-windows-gnu/release/libwasm_interpreter.dll")
+        from file("wasm-interpreter/target/x86_64-apple-darwin/release/libwasm_interpreter.dylib")
+        into file("src/main/resources/lib")
+    }
+}
+
+// Make sure we always build the native libraries.
+rootProject.tasks.getByName('build').dependsOn buildNativeLibraries
+rootProject.tasks.getByName('runClient').dependsOn buildNativeLibraries
+rootProject.tasks.getByName('runServer').dependsOn buildNativeLibraries
+
 processResources {
     // this will ensure that this task is redone when the versions change.
     inputs.property "version", project.version
