@@ -6,8 +6,8 @@ import li.cil.oc.api.machine.Machine;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.Vector;
 
 import cz.adamh.utils.NativeUtils;
 
@@ -17,30 +17,33 @@ public class WasmArch implements Architecture {
 
     static {
         // Load the shared library for our WASM interpreter.
-        try {
-            // FIXME change the file extension based on OS.
-            NativeUtils.loadLibraryFromJar("/lib/libwasm-interpreter.so");
-        } catch (IOException e) {
-            e.printStackTrace();
+
+        String osName = System.getProperty("os.name");
+
+        String libName;
+
+        if (osName.contains("Windows")) {
+            // We are a Windows OS
+            libName = "libwasm_interpreter.dll";
+        } else if (osName.contains("Mac")) {
+            // We are an Apple OS
+            libName = "libwasm_interpreter.dylib";
+        } else {
+            // I dunno. Assume we're Linux.
+            libName = "libwasm_interpreter.so";
         }
 
         try {
-            final java.lang.reflect.Field LIBRARIES = ClassLoader.class.getDeclaredField("loadedLibraryNames");
-            LIBRARIES.setAccessible(true);
-    
-            final Vector<String> libraries = (Vector<String>) LIBRARIES.get(ClassLoader.getSystemClassLoader());
-            for (String libName : libraries) {
-                System.out.println(libName);
-            }
-        } catch (NoSuchFieldException | SecurityException e) {
-            // TODO Auto-generated catch block
+            NativeUtils.loadLibraryFromJar("/lib/" + libName);
+        } catch (IOException e) {
             e.printStackTrace();
-        } catch (IllegalArgumentException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+
+            // Since we failed to extract the jar file, make an attempt to load it from the filesystem.
+
+            final File runningDir = new File(System.getProperty("user.dir"));
+            System.load(runningDir + "/natives/" + libName);
+
+            // If this fails too, then we will completely fail.
         }
     }
 

@@ -72,11 +72,20 @@ task buildNativeLibraries {
         }
     }
 
+    // Copy into resources folder so it will end up in jar file.
     copy {
         from file("wasm-interpreter/target/x86_64-unknown-linux-gnu/release/libwasm_interpreter.so")
         from file("wasm-interpreter/target/x86_64-pc-windows-gnu/release/libwasm_interpreter.dll")
         from file("wasm-interpreter/target/x86_64-apple-darwin/release/libwasm_interpreter.dylib")
         into file("src/main/resources/lib")
+    }
+
+    // Copy into run folder so it we can test with it.
+    copy {
+        from file("wasm-interpreter/target/x86_64-unknown-linux-gnu/release/libwasm_interpreter.so")
+        from file("wasm-interpreter/target/x86_64-pc-windows-gnu/release/libwasm_interpreter.dll")
+        from file("wasm-interpreter/target/x86_64-apple-darwin/release/libwasm_interpreter.dylib")
+        into file("run/native")
     }
 }
 
