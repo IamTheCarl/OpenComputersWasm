@@ -85,7 +85,7 @@ task buildNativeLibraries {
         from file("wasm-interpreter/target/x86_64-unknown-linux-gnu/release/libwasm_interpreter.so")
         from file("wasm-interpreter/target/x86_64-pc-windows-gnu/release/libwasm_interpreter.dll")
         from file("wasm-interpreter/target/x86_64-apple-darwin/release/libwasm_interpreter.dylib")
-        into file("run/native")
+        into file("run/natives")
     }
 }
 
@@ -93,6 +93,15 @@ task buildNativeLibraries {
 rootProject.tasks.getByName('build').dependsOn buildNativeLibraries
 rootProject.tasks.getByName('runClient').dependsOn buildNativeLibraries
 rootProject.tasks.getByName('runServer').dependsOn buildNativeLibraries
+
+task cleanNativeLibraries {
+    exec {
+        workingDir 'wasm-interpreter'
+        commandLine 'cargo', 'clean'
+    }
+}
+
+rootProject.tasks.getByName('clean').dependsOn cleanNativeLibraries
 
 processResources {
     // this will ensure that this task is redone when the versions change.
