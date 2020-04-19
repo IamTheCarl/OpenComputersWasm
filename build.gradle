@@ -56,18 +56,28 @@ compileJava {
 
 task buildNativeLibraries {
 
-    exec {
-        workingDir 'wasm-interpreter'
-
-        if ("${project.build_linux}" == "true") {
+    // Build Linux
+    if ("${project.build_linux}" == "true") {
+        exec {
+            workingDir 'wasm-interpreter'
             commandLine 'cargo', 'build', '--target', 'x86_64-unknown-linux-gnu', '--release'
         }
+    }
 
-        if ("${project.build_windows}" == "true") {
+    // Build Windows
+    if ("${project.build_windows}" == "true") {
+        exec {
+            workingDir 'wasm-interpreter'
             commandLine 'cargo', 'build', '--target', 'x86_64-pc-windows-gnu', '--release'
         }
+    }
 
-        if ("${project.build_macos}" == "true") {
+    // Build Mac
+    if ("${project.build_macos}" == "true") {
+        exec {
+            workingDir 'wasm-interpreter'
+            environment 'CC', 'o64-clang'
+            environment 'CXX', 'o64-clang++'
             commandLine 'cargo', 'build', '--target', 'x86_64-apple-darwin', '--release'
         }
     }
@@ -75,7 +85,7 @@ task buildNativeLibraries {
     // Copy into resources folder so it will end up in jar file.
     copy {
         from file("wasm-interpreter/target/x86_64-unknown-linux-gnu/release/libwasm_interpreter.so")
-        from file("wasm-interpreter/target/x86_64-pc-windows-gnu/release/libwasm_interpreter.dll")
+        from file("wasm-interpreter/target/x86_64-pc-windows-gnu/release/wasm_interpreter.dll")
         from file("wasm-interpreter/target/x86_64-apple-darwin/release/libwasm_interpreter.dylib")
         into file("src/main/resources/lib")
     }
@@ -83,7 +93,7 @@ task buildNativeLibraries {
     // Copy into run folder so it we can test with it.
     copy {
         from file("wasm-interpreter/target/x86_64-unknown-linux-gnu/release/libwasm_interpreter.so")
-        from file("wasm-interpreter/target/x86_64-pc-windows-gnu/release/libwasm_interpreter.dll")
+        from file("wasm-interpreter/target/x86_64-pc-windows-gnu/release/wasm_interpreter.dll")
         from file("wasm-interpreter/target/x86_64-apple-darwin/release/libwasm_interpreter.dylib")
         into file("run/natives")
     }
@@ -93,15 +103,6 @@ task buildNativeLibraries {
 rootProject.tasks.getByName('build').dependsOn buildNativeLibraries
 rootProject.tasks.getByName('runClient').dependsOn buildNativeLibraries
 rootProject.tasks.getByName('runServer').dependsOn buildNativeLibraries
-
-task cleanNativeLibraries {
-    exec {
-        workingDir 'wasm-interpreter'
-        commandLine 'cargo', 'clean'
-    }
-}
-
-rootProject.tasks.getByName('clean').dependsOn cleanNativeLibraries
 
 processResources {
     // this will ensure that this task is redone when the versions change.
