@@ -20,7 +20,7 @@ out
 *.so
 *.dll
 *.dylib
-wasm-interpreter/target/*
+target/*
 
 # gradle
 build

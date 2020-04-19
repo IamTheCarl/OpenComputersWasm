@@ -14,6 +14,7 @@ import cz.adamh.utils.NativeUtils;
 @Architecture.Name("WASM")
 public class WasmArch implements Architecture {
     private final Machine machine;
+    private long wasmPtr;
 
     static {
         // Load the shared library for our WASM interpreter.
@@ -107,7 +108,7 @@ public class WasmArch implements Architecture {
     @Override
     public ExecutionResult runThreaded(boolean arg0) {
         // TODO Auto-generated method stub
-        return null;
+        return new ExecutionResult.Sleep(0);
     }
 
     @Override

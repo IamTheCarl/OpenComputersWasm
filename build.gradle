@@ -59,7 +59,6 @@ task buildNativeLibraries {
     // Build Linux
     if ("${project.build_linux}" == "true") {
         exec {
-            workingDir 'wasm-interpreter'
             commandLine 'cargo', 'build', '--target', 'x86_64-unknown-linux-gnu', '--release'
         }
     }
@@ -67,7 +66,6 @@ task buildNativeLibraries {
     // Build Windows
     if ("${project.build_windows}" == "true") {
         exec {
-            workingDir 'wasm-interpreter'
             commandLine 'cargo', 'build', '--target', 'x86_64-pc-windows-gnu', '--release'
         }
     }
@@ -75,7 +73,6 @@ task buildNativeLibraries {
     // Build Mac
     if ("${project.build_macos}" == "true") {
         exec {
-            workingDir 'wasm-interpreter'
             environment 'CC', 'o64-clang'
             environment 'CXX', 'o64-clang++'
             commandLine 'cargo', 'build', '--target', 'x86_64-apple-darwin', '--release'
@@ -84,17 +81,17 @@ task buildNativeLibraries {
 
     // Copy into resources folder so it will end up in jar file.
     copy {
-        from file("wasm-interpreter/target/x86_64-unknown-linux-gnu/release/libwasm_interpreter.so")
-        from file("wasm-interpreter/target/x86_64-pc-windows-gnu/release/wasm_interpreter.dll")
-        from file("wasm-interpreter/target/x86_64-apple-darwin/release/libwasm_interpreter.dylib")
+        from file("target/x86_64-unknown-linux-gnu/release/libwasm_interpreter.so")
+        from file("target/x86_64-pc-windows-gnu/release/wasm_interpreter.dll")
+        from file("target/x86_64-apple-darwin/release/libwasm_interpreter.dylib")
         into file("src/main/resources/lib")
     }
 
     // Copy into run folder so it we can test with it.
     copy {
-        from file("wasm-interpreter/target/x86_64-unknown-linux-gnu/release/libwasm_interpreter.so")
-        from file("wasm-interpreter/target/x86_64-pc-windows-gnu/release/wasm_interpreter.dll")
-        from file("wasm-interpreter/target/x86_64-apple-darwin/release/libwasm_interpreter.dylib")
+        from file("target/x86_64-unknown-linux-gnu/release/libwasm_interpreter.so")
+        from file("target/x86_64-pc-windows-gnu/release/wasm_interpreter.dll")
+        from file("target/x86_64-apple-darwin/release/libwasm_interpreter.dylib")
         into file("run/natives")
     }
 }
