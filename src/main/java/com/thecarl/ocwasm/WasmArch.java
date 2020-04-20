@@ -22,11 +22,11 @@ public class WasmArch implements Architecture {
     private long wasmID;
     boolean initalized = false;
 
-    private static native void setup(Logger logger);
+    private static native void setup();
     private static native long createWasmInstance();
     private static native void destoryWasmInstance(long id);
-    private static native ExecutionResult runInstance(long id, boolean lastCallWasSynchronus);
-    private static native void runSynchronized(long id);
+    private static native ExecutionResult runInstance(long id, boolean lastCallWasSynchronus, Machine machine);
+    private static native void runSynchronized(long id, Machine machine);
 
     static {
         // Load the shared library for our WASM interpreter.
@@ -63,7 +63,7 @@ public class WasmArch implements Architecture {
         nativeLogger = LogManager.getLogger("WASM Native");
 
         // The Rust side needs to set some things up.
-        setup(nativeLogger);
+        setup();
     }
 
     public WasmArch(Machine machine) {
@@ -73,6 +73,7 @@ public class WasmArch implements Architecture {
     @Override
     public void close() {
         destoryWasmInstance(wasmID);
+        initalized = false;
     }
 
     @Override
@@ -118,12 +119,12 @@ public class WasmArch implements Architecture {
 
     @Override
     public void runSynchronized() {
-        runSynchronized(wasmID);
+        runSynchronized(wasmID, machine);
     }
 
     @Override
     public ExecutionResult runThreaded(boolean lastCallWasSynchronus) {
-        ExecutionResult result = runInstance(wasmID, lastCallWasSynchronus);
+        ExecutionResult result = runInstance(wasmID, lastCallWasSynchronus, machine);
         return result;        
     }
 
