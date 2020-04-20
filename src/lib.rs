@@ -7,6 +7,7 @@ use jni::JNIEnv;
 
 use jni::objects::JClass;
 use jni::objects::JObject;
+use jni::sys::jobject;
 use jni::signature::JavaType;
 use jni::signature::Primitive;
 use jni::objects::JValue;
@@ -111,4 +112,81 @@ pub extern "system" fn Java_com_thecarl_ocwasm_WasmArch_destoryWasmInstance(_env
     // Get a write lock, because we actually need to write to this list.
     let mut machines = MACHINE_LIST.write().expect(POISON_MESSAGE);
     machines.remove(key);
+}
+
+pub enum ExecutionResult {
+    Sleep(i32),
+    Shutdown(bool),
+    SynchronizedCall,
+    Error(String)
+}
+
+impl ExecutionResult {
+    fn create_jobject(&self, env: &JNIEnv) -> jobject {
+        match self {
+            Self::Sleep(time) => {
+                let class = env.find_class("li/cil/oc/api/machine/ExecutionResult$Sleep")
+                    .expect("Failed to find ExecutionResult.Sleep class.");
+    
+                env.new_object(
+                    class,
+                    "(I)V",
+                    &[JValue::Int(*time)])
+                    .expect("Failed to construct ExecutionResult.Sleep object.").into_inner() 
+            },
+            Self::Shutdown(reboot) => {
+                let class = env.find_class("li/cil/oc/api/machine/ExecutionResult$Shutdown")
+                    .expect("Failed to find ExecutionResult.Shutdown class.");
+    
+                // Need boolean as integer. Yes, it feels weird.
+                let reboot = if *reboot {
+                    1
+                } else {
+                    0
+                };
+
+                env.new_object(
+                    class,
+                    "(Z)V",
+                    &[JValue::Bool(reboot)])
+                    .expect("Failed to construct ExecutionResult.Shutdown object.").into_inner() 
+            },
+            Self::SynchronizedCall => {
+                let class = env.find_class("li/cil/oc/api/machine/ExecutionResult$SynchronizedCall")
+                    .expect("Failed to find ExecutionResult.SynchronizedCall class.");
+
+                env.new_object(
+                    class,
+                    "()V",
+                    &[])
+                    .expect("Failed to construct ExecutionResult.SynchronizedCall object.").into_inner() 
+            },
+            Self::Error(message) => {
+                let class = env.find_class("li/cil/oc/api/machine/ExecutionResult$Error")
+                    .expect("Failed to find ExecutionResult.Error class.");
+
+                let message = env.new_string(message)
+                    .expect(FAIL_CREATE_JAVA_STRING);
+
+                env.new_object(
+                    class,
+                    "(Ljava/lang/String;)V",
+                    &[JValue::Object(message.into())])
+                    .expect("Failed to construct ExecutionResult.Error object.").into_inner() 
+            }
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_thecarl_ocwasm_WasmArch_runInstance(env: JNIEnv, _class: JClass, _id: jlong) -> jobject {
+    // ExecutionResult::Sleep(10).create_jobject(&env)
+    // ExecutionResult::Shutdown(false).create_jobject(&env)
+    // ExecutionResult::SynchronizedCall.create_jobject(&env)
+    // ExecutionResult::Error(format!("Nothing actually went wrong.")).create_jobject(&env)
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_thecarl_ocwasm_WasmArch_runSynchronized(_env: JNIEnv, _class: JClass, _id: jlong) {
+    println!("Synchronized run.");
 }

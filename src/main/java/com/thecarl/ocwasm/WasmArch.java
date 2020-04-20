@@ -19,13 +19,14 @@ public class WasmArch implements Architecture {
     private static Logger nativeLogger;
 
     private final Machine machine;
-    private long wasmPtr;
+    private long wasmID;
     boolean initalized = false;
-
 
     private static native void setup(Logger logger);
     private static native long createWasmInstance();
     private static native void destoryWasmInstance(long id);
+    private static native ExecutionResult runInstance(long id, boolean lastCallWasSynchronus);
+    private static native void runSynchronized(long id);
 
     static {
         // Load the shared library for our WASM interpreter.
@@ -36,7 +37,7 @@ public class WasmArch implements Architecture {
 
         if (osName.contains("Windows")) {
             // We are a Windows OS
-            libName = "libwasm_interpreter.dll";
+            libName = "wasm_interpreter.dll";
         } else if (osName.contains("Mac")) {
             // We are an Apple OS
             libName = "libwasm_interpreter.dylib";
@@ -71,12 +72,12 @@ public class WasmArch implements Architecture {
 
     @Override
     public void close() {
-        destoryWasmInstance(wasmPtr);
+        destoryWasmInstance(wasmID);
     }
 
     @Override
     public boolean initialize() {
-        wasmPtr = createWasmInstance();
+        wasmID = createWasmInstance();
         initalized = true;
 
         return true;
@@ -117,13 +118,13 @@ public class WasmArch implements Architecture {
 
     @Override
     public void runSynchronized() {
-        // The interpreter will never interact with the world directly, so this will never be used.
+        runSynchronized(wasmID);
     }
 
     @Override
-    public ExecutionResult runThreaded(boolean arg0) {
-        // TODO Auto-generated method stub
-        return new ExecutionResult.Sleep(0);
+    public ExecutionResult runThreaded(boolean lastCallWasSynchronus) {
+        ExecutionResult result = runInstance(wasmID, lastCallWasSynchronus);
+        return result;        
     }
 
     @Override
