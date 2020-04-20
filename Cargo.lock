@@ -691,6 +691,7 @@ name = "wasm-interpreter"
 version = "0.1.0"
 dependencies = [
  "jni 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "slotmap 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasmer 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

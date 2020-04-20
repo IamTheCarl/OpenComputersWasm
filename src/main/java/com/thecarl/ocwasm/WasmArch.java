@@ -9,12 +9,23 @@ import net.minecraft.nbt.NBTTagCompound;
 import java.io.File;
 import java.io.IOException;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import cz.adamh.utils.NativeUtils;
 
 @Architecture.Name("WASM")
 public class WasmArch implements Architecture {
+    private static Logger nativeLogger;
+
     private final Machine machine;
     private long wasmPtr;
+    boolean initalized = false;
+
+
+    private static native void setup(Logger logger);
+    private static native long createWasmInstance();
+    private static native void destoryWasmInstance(long id);
 
     static {
         // Load the shared library for our WASM interpreter.
@@ -46,30 +57,34 @@ public class WasmArch implements Architecture {
 
             // If this fails too, then we will completely fail.
         }
-    }
 
-    private static native String hello();
+        // Get us a logger.
+        nativeLogger = LogManager.getLogger("WASM Native");
+
+        // The Rust side needs to set some things up.
+        setup(nativeLogger);
+    }
 
     public WasmArch(Machine machine) {
         this.machine = machine;
-      }
+    }
 
     @Override
     public void close() {
-        // TODO Auto-generated method stub
-
+        destoryWasmInstance(wasmPtr);
     }
 
     @Override
     public boolean initialize() {
-        System.out.println(hello());
+        wasmPtr = createWasmInstance();
+        initalized = true;
+
         return true;
     }
 
     @Override
     public boolean isInitialized() {
-        // TODO Auto-generated method stub
-        return true;
+        return initalized;
     }
 
     @Override

@@ -10,6 +10,7 @@ edition = "2018"
 jni = "0.16.0"
 wasmer = "0.1.0"
 slotmap = "0.4.0"
+lazy_static = "1.4.0"
 
 [lib]
 crate_type=["cdylib"]
