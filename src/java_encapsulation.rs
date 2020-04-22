@@ -1,4 +1,5 @@
 
+use std::iter::Map;
 use jni::JNIEnv;
 use jni::objects::JClass;
 use jni::objects::JObject;
@@ -85,67 +86,214 @@ pub mod log {
     }
 }
 
-#[allow(dead_code)]
-pub enum ExecutionResult {
-    Sleep(i32),
-    Shutdown(bool),
-    SynchronizedCall,
-    Error(String)
-}
+pub mod open_computers {
 
-impl ExecutionResult {
-    pub fn create_jobject<'a>(&self, env: &JNIEnv<'a>) -> JObject<'a> {
-        match self {
-            Self::Sleep(time) => {
-                let class = env.find_class("li/cil/oc/api/machine/ExecutionResult$Sleep")
-                    .expect("Failed to find ExecutionResult.Sleep class.");
+    use jni::objects::JString;
+    use jni::objects::JMap;
+    use jni::objects::JMethodID;
+    use jni::errors::Result as JNIResult;
+    use super::*;
+
+    #[allow(dead_code)]
+    pub enum ExecutionResult {
+        Sleep(i32),
+        Shutdown(bool),
+        SynchronizedCall,
+        Error(String)
+    }
     
-                env.new_object(
-                    class,
-                    "(I)V",
-                    &[JValue::Int(*time)])
-                    .expect("Failed to construct ExecutionResult.Sleep object.") 
-            },
-            Self::Shutdown(reboot) => {
-                let class = env.find_class("li/cil/oc/api/machine/ExecutionResult$Shutdown")
-                    .expect("Failed to find ExecutionResult.Shutdown class.");
+    impl ExecutionResult {
+        pub fn create_jobject<'a>(&self, env: &JNIEnv<'a>) -> JObject<'a> {
+            match self {
+                Self::Sleep(time) => {
+                    let class = env.find_class("li/cil/oc/api/machine/ExecutionResult$Sleep")
+                        .expect("Failed to find ExecutionResult.Sleep class.");
+        
+                    env.new_object(
+                        class,
+                        "(I)V",
+                        &[JValue::Int(*time)])
+                        .expect("Failed to construct ExecutionResult.Sleep object.") 
+                },
+                Self::Shutdown(reboot) => {
+                    let class = env.find_class("li/cil/oc/api/machine/ExecutionResult$Shutdown")
+                        .expect("Failed to find ExecutionResult.Shutdown class.");
+        
+                    // Need boolean as integer. Yes, it feels weird.
+                    let reboot = if *reboot {
+                        1
+                    } else {
+                        0
+                    };
     
-                // Need boolean as integer. Yes, it feels weird.
-                let reboot = if *reboot {
-                    1
-                } else {
-                    0
-                };
-
-                env.new_object(
-                    class,
-                    "(Z)V",
-                    &[JValue::Bool(reboot)])
-                    .expect("Failed to construct ExecutionResult.Shutdown object.") 
-            },
-            Self::SynchronizedCall => {
-                let class = env.find_class("li/cil/oc/api/machine/ExecutionResult$SynchronizedCall")
-                    .expect("Failed to find ExecutionResult.SynchronizedCall class.");
-
-                env.new_object(
-                    class,
-                    "()V",
-                    &[])
-                    .expect("Failed to construct ExecutionResult.SynchronizedCall object.") 
-            },
-            Self::Error(message) => {
-                let class = env.find_class("li/cil/oc/api/machine/ExecutionResult$Error")
-                    .expect("Failed to find ExecutionResult.Error class.");
-
-                let message = env.new_string(message)
-                    .expect(crate::FAIL_CREATE_JAVA_STRING);
-
-                env.new_object(
-                    class,
-                    "(Ljava/lang/String;)V",
-                    &[JValue::Object(message.into())])
-                    .expect("Failed to construct ExecutionResult.Error object.") 
+                    env.new_object(
+                        class,
+                        "(Z)V",
+                        &[JValue::Bool(reboot)])
+                        .expect("Failed to construct ExecutionResult.Shutdown object.") 
+                },
+                Self::SynchronizedCall => {
+                    let class = env.find_class("li/cil/oc/api/machine/ExecutionResult$SynchronizedCall")
+                        .expect("Failed to find ExecutionResult.SynchronizedCall class.");
+    
+                    env.new_object(
+                        class,
+                        "()V",
+                        &[])
+                        .expect("Failed to construct ExecutionResult.SynchronizedCall object.") 
+                },
+                Self::Error(message) => {
+                    let class = env.find_class("li/cil/oc/api/machine/ExecutionResult$Error")
+                        .expect("Failed to find ExecutionResult.Error class.");
+    
+                    let message = env.new_string(message)
+                        .expect(crate::FAIL_CREATE_JAVA_STRING);
+    
+                    env.new_object(
+                        class,
+                        "(Ljava/lang/String;)V",
+                        &[JValue::Object(message.into())])
+                        .expect("Failed to construct ExecutionResult.Error object.") 
+                }
             }
+        }
+    }
+
+    pub struct Signal {
+
+    }
+    
+    pub struct Callback {
+        
+    }
+
+    pub struct Value {
+
+    }
+
+    pub struct Environment {
+
+    }
+
+    pub enum MethodValue {
+        Byte(i8),
+        Short(i16),
+        Int(i32),
+        Long(i64),
+        Float(f32),
+        Double(f64),
+        Str(String),
+        Array(Vec<MethodValue>),
+    }
+
+    pub enum ValEnviron {
+        Value(Value),
+        Environment(Environment),
+    }
+    
+    pub struct Machine<'a> {
+        env: &'a JNIEnv<'a>,
+        machine: JObject<'a>,
+        get_components_method_id: JMethodID<'a>
+    }
+    
+    #[allow(dead_code)]
+    impl<'a> Machine<'a> {
+
+        pub fn new(env: &'a JNIEnv<'a>, machine: JObject<'a>) -> JNIResult<Machine<'a>> {
+            let class = env.auto_local(env.find_class("li/cil/oc/api/machine/Machine")?);
+
+            let get_components_method_id = env.get_method_id(&class, "components", "()Ljava/util/Map;")?;
+
+            Ok(Machine {
+                env,
+                machine,
+                get_components_method_id,
+            })
+        }
+    
+        pub fn get_components(&self) -> JNIResult<JMap> {
+            let map = self.env.call_method_unchecked(
+                self.machine,
+                self.get_components_method_id,
+                JavaType::Object(format!("java/util/Map")),
+                &[]
+            )?;
+
+            if let JValue::Object(map) = map {
+                self.env.get_map(map)
+            } else {
+                Err(jni::errors::Error::from_kind(jni::errors::ErrorKind::Msg(format!("Components method did not return a map."))))
+            }
+        }
+    
+        pub fn component_count() -> u32 {
+            unimplemented!()
+        }
+    
+        pub fn max_component_count() -> u32 {
+            unimplemented!()
+        }
+    
+        pub fn get_cost_per_tick() -> f64 {
+            unimplemented!()
+        }
+    
+        pub fn set_cost_per_tick(price: f64) {
+            unimplemented!()
+        }
+    
+        pub fn get_tmp_address() -> String {
+            unimplemented!()
+        }
+    
+        pub fn get_last_error() -> String {
+            unimplemented!()
+        }
+    
+        pub fn get_world_time() -> u64 {
+            unimplemented!()
+        }
+    
+        pub fn get_uptime() -> f64 {
+            unimplemented!()
+        }
+    
+        pub fn get_cpu_time() -> f64 {
+            unimplemented!()
+        }
+    
+        pub fn beep(frequency: u16, duration: u16) {
+            unimplemented!()
+        }
+    
+        pub fn crash(message: &str) -> bool {
+            unimplemented!()
+        }
+    
+        pub fn pop_signal() -> Signal {
+            unimplemented!()
+        }
+    
+        pub fn methods(value: ValEnviron) -> Map<String, Callback> {
+            unimplemented!()
+        }
+
+        pub fn invoke(address: &str, method: &str, args: &[MethodValue]) -> Result<Box<[MethodValue]>, ()> {
+            // TODO remember to handle an exception correctly.
+            unimplemented!()
+        }
+
+        pub fn get_users() -> Box<[String]> {
+            unimplemented!()
+        }
+
+        pub fn add_user(name: &str) -> Result<(), &str> {
+            unimplemented!()
+        }
+
+        pub fn remove_user(name: &str) -> bool {
+            unimplemented!()
         }
     }
 }
